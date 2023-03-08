@@ -1,0 +1,230 @@
+﻿<Window
+    x:Class="MuteAnyApp.WinUI.Views.ScenarioWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:System="clr-namespace:System;assembly=mscorlib"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:enums="clr-namespace:MuteAnyApp.Core.Enums;assembly=MuteAnyApp.Core"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tlTypes="clr-namespace:MuteAnyApp.Core.Types;assembly=MuteAnyApp.Core"
+    xmlns:uiTypes="clr-namespace:MuteAnyApp.WinUI.Types"
+    xmlns:vm="clr-namespace:MuteAnyApp.WinUI.ViewModels"
+    Title="Конфигурация сценария"
+    Width="1200"
+    Height="450"
+    WindowStartupLocation="CenterScreen"
+    d:DataContext="{d:DesignInstance vm:ScenarioViewModel}"
+    uiTypes:DialogCloser.DialogResult="{Binding DialogResult}"
+    ResizeMode="NoResize"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ObjectDataProvider
+            x:Key="dataFromEnum"
+            MethodName="GetValues"
+            ObjectType="{x:Type System:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:ActionType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <StackPanel
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Stretch"
+            Orientation="Horizontal">
+            <TextBlock
+                Margin="5"
+                VerticalAlignment="Center"
+                FontSize="14"
+                Text="Название сценария" />
+            <TextBox
+                Width="600"
+                Margin="5"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                VerticalContentAlignment="Center"
+                FontSize="14"
+                Text="{Binding ScenarioName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+            <TextBlock
+                HorizontalAlignment="Center"
+                FontSize="16"
+                Text="Действия сценария" />
+            <ListView
+                Grid.Row="1"
+                Margin="5"
+                ItemsSource="{Binding SoundChangeActions, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <ListView.ItemTemplate>
+                    <DataTemplate DataType="{x:Type tlTypes:SoundChangeAction}">
+                        <Border Background="DeepSkyBlue" CornerRadius="10">
+                            <Border.Effect>
+                                <DropShadowEffect
+                                    BlurRadius="15"
+                                    Direction="-90"
+                                    RenderingBias="Quality"
+                                    ShadowDepth="2" />
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    Margin="5"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="14"
+                                    Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox
+                                    Grid.Column="1"
+                                    MinWidth="170"
+                                    Margin="5"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="14"
+                                    Text="{Binding ProcessName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox
+                                    Grid.Column="2"
+                                    Width="80"
+                                    VerticalAlignment="Center"
+                                    ItemsSource="{Binding Source={StaticResource dataFromEnum}}"
+                                    SelectedItem="{Binding ActionType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox
+                                    Grid.Column="3"
+                                    MinWidth="50"
+                                    Margin="5"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
+                                    FontSize="14"
+                                    Text="{Binding SetToValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button
+                                    Grid.Column="4"
+                                    Margin="5"
+                                    Padding="4"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.RemoveActionCommand}"
+                                    CommandParameter="{Binding Id}"
+                                    Content="Удалить" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+            <Button
+                Grid.Row="2"
+                Margin="5"
+                Command="{Binding AddActionCommand}"
+                Content="Новое пустое действие"
+                FontSize="16" />
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Margin="5"
+                    HorizontalAlignment="Center"
+                    FontSize="16"
+                    Text="Доступные аудио-процессы" />
+                <Button
+                    Grid.Column="1"
+                    Margin="5"
+                    Padding="4"
+                    Command="{Binding RefreshSoundProcessesCommand}"
+                    Content="Обновить" />
+            </Grid>
+
+            <ListView
+                Grid.Row="1"
+                Margin="5"
+                ItemsSource="{Binding DiscoveredProcess}">
+                <ListView.ItemTemplate>
+                    <DataTemplate DataType="{x:Type tlTypes:ProcessModel}">
+                        <Border
+                            Margin="1"
+                            HorizontalAlignment="Stretch"
+                            Background="#ebecc0"
+                            CornerRadius="5">
+                            <Border.Effect>
+                                <DropShadowEffect
+                                    BlurRadius="15"
+                                    Direction="-90"
+                                    RenderingBias="Quality"
+                                    ShadowDepth="2" />
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Margin="5"
+                                    VerticalAlignment="Center"
+                                    FontSize="14"
+                                    Text="{Binding ProcessName}" />
+                                <Button
+                                    Grid.Column="1"
+                                    Margin="5"
+                                    Padding="2"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.AddProcessActionCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="Создать действие с процессом"
+                                    FontSize="14" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+        </Grid>
+        <StackPanel
+            Grid.Row="2"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                Width="100"
+                Margin="5"
+                HorizontalAlignment="Right"
+                Command="{Binding SaveCommand}"
+                Content="Сохранить" />
+            <Button
+                Width="100"
+                Margin="5"
+                HorizontalAlignment="Right"
+                Command="{Binding CancelCommand}"
+                Content="Закрыть" />
+        </StackPanel>
+
+    </Grid>
+</Window>
