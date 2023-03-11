@@ -21,11 +21,11 @@ namespace MuteAnyApp.Mutter
 
             try
             {     
-                var scenarioFile = Path.Combine(ServiceHelpers.GetAssemblyDirectory(), ServiceHelpers.ScenarioFolderName, ServiceHelpers.ScenarioFileName);
+                var scenarioFile = Path.Combine(ServiceHelpers.GetAssemblyDirectory(), ServiceHelpers.ScenarioFileName);
 
                 if (!File.Exists(scenarioFile))
                 {
-                    File.Create(scenarioFile);
+                    ServiceHelpers.WriteToLog("No scenario file");
                     return;
                 }
 
@@ -34,7 +34,8 @@ namespace MuteAnyApp.Mutter
                 var scenario = sm.GetCurrentScenario();
                 
                 if (scenario == null)
-                {                    
+                {
+                    ServiceHelpers.WriteToLog("Scenario was not deserealized");
                     return;
                 }
 

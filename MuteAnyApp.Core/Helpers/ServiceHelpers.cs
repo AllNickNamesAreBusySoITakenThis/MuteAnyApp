@@ -26,7 +26,7 @@ namespace MuteAnyApp.Core.Helpers
         {
             try
             {
-                var logsDir = Path.Combine(GetAssemblyDirectory(), ScenarioFolderName, LogFolderName, LogFileName);
+                var logsDir = Path.Combine(GetAssemblyDirectory(), LogFolderName);
 
                 if (!Directory.Exists(logsDir))
                 {

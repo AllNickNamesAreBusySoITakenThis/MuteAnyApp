@@ -207,9 +207,19 @@ namespace MuteAnyApp.Core.Managers
                 error = string.Empty;
                 var mainDir = ServiceHelpers.GetAssemblyDirectory();
                 var appName = "SoundManagerConsole.exe";
+                var jsonConfName = "SoundManagerConsole.runtimeconfig.json";
+                var dllName = "SoundManagerConsole.dll";
+                var coreName = "MuteAnyApp.Core.dll";
+                var njName = "Newtonsoft.Json.dll";
+                var csCoreName = "CSCore.dll";
 
                 var appFilePath = Path.Combine(mainDir, appName);
-                if (!File.Exists(appFilePath))
+                var jsonFilePath = Path.Combine(mainDir, jsonConfName);
+                var dllFilePath = Path.Combine(mainDir, dllName);
+                var coreFilePath = Path.Combine(mainDir, coreName);
+                var njFilePath = Path.Combine(mainDir, njName);
+                var csCoreFilePath = Path.Combine(mainDir, csCoreName);
+                if (!File.Exists(appFilePath) || !File.Exists(jsonFilePath) || !File.Exists(dllFilePath) || !File.Exists(coreFilePath) || !File.Exists(njFilePath) || !File.Exists(csCoreFilePath))
                 {
                     // it's ok, maybe we dont have it in debug
                     // anyway it can be added manually
@@ -222,6 +232,11 @@ namespace MuteAnyApp.Core.Managers
                 }
 
                 File.Copy(appFilePath, Path.Combine(folderPath, appName), true);
+                File.Copy(jsonFilePath, Path.Combine(folderPath, jsonConfName), true);
+                File.Copy(dllFilePath, Path.Combine(folderPath, dllName), true);
+                File.Copy(coreFilePath, Path.Combine(folderPath, coreName), true);
+                File.Copy(njFilePath, Path.Combine(folderPath, njName), true);
+                File.Copy(csCoreFilePath, Path.Combine(folderPath, csCoreName), true);
 
                 return true;
             }
