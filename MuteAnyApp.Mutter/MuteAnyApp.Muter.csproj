@@ -1,21 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>SoundManagerConsole</AssemblyName>
-    <Authors>Vanny</Authors>
-    <Description>This is app to manage another apps sounds</Description>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net7.0-windows</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Version>1.1.1</Version>
+		<AssemblyName>SoundManagerConsole</AssemblyName>
+		<Authors>Vanny</Authors>
+		<Description>This is app to manage another apps sounds</Description>
+		<UseWPF>True</UseWPF>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="CSCore" Version="1.2.1.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CSCore" Version="1.2.1.2" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MuteAnyApp.Core\MuteAnyApp.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\MuteAnyApp.Core\MuteAnyApp.Core.csproj" />
+	</ItemGroup>
 
 </Project>

@@ -1,10 +1,16 @@
 ﻿
 using CSCore.CoreAudioAPI;
 using MuteAnyApp.Core.Enums;
+using MuteAnyApp.Core.Helpers;
+using MuteAnyApp.Core.Managers;
 using MuteAnyApp.Core.Types;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 namespace MuteAnyApp.Mutter
 {
@@ -12,101 +18,76 @@ namespace MuteAnyApp.Mutter
     {
         static void Main(string[] args)
         {
-            const string ScenarioFolderName = "Scenarios";
-            const string ScenarioFileName = "CreatedScenarios.json";
-            const string LogFolderName = "Logs";
 
-            var logsDir = Path.Combine(Directory.GetCurrentDirectory(), LogFolderName);
+            try
+            {     
+                var scenarioFile = Path.Combine(ServiceHelpers.GetAssemblyDirectory(), ServiceHelpers.ScenarioFolderName, ServiceHelpers.ScenarioFileName);
 
-            if (!Directory.Exists(logsDir))
-            {
-                Directory.CreateDirectory(logsDir);
-            }
-
-            var scenarioDir = Path.Combine(Directory.GetCurrentDirectory(), ScenarioFolderName);
-
-            if (!Directory.Exists(scenarioDir))
-            {
-                Directory.CreateDirectory(scenarioDir);
-                return;
-            }
-
-            var scenarioFile = Path.Combine(scenarioDir, ScenarioFileName);
-
-            if (!File.Exists(scenarioFile))
-            {
-                File.Create(scenarioFile);
-                return;
-            }
-
-            if (args.Length == 0)
-            {
-                return;
-            }
-
-            if (!Guid.TryParse(args[0], out var scenarioGuid))
-            {
-                return;
-            }
-
-            var jsonString = File.ReadAllText(scenarioFile);
-
-            var scenario = JsonConvert.DeserializeObject<IEnumerable<SoundChangeScenario>>(jsonString).FirstOrDefault(s => s.Id.Equals(scenarioGuid));
-
-            if (scenario == null)
-            {
-                return;
-            }
-
-            var processes = new List<ProcessModel>();
-
-            foreach (var process in Process.GetProcesses())
-            {
-                var action = scenario.Actions.FirstOrDefault(a => a.ProcessName == process.ProcessName);
-
-                if (action == null)
+                if (!File.Exists(scenarioFile))
                 {
-                    continue;
+                    File.Create(scenarioFile);
+                    return;
                 }
 
-                processes.Add(new ProcessModel(process.Id, process.ProcessName, action));
-                Console.WriteLine($"{process.ProcessName} - {process.Id}");
-            }
+                var sm = new ScenarioManager();
 
-            Console.WriteLine();
-            Console.WriteLine("Collecting processes done!");
+                var scenario = sm.GetCurrentScenario();
+                
+                if (scenario == null)
+                {                    
+                    return;
+                }
 
-            using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render))
-            {
-                using (var sessionEnumerator = sessionManager.GetSessionEnumerator())
+                var processes = new List<ProcessModel>();
+
+                foreach (var process in Process.GetProcesses())
                 {
-                    foreach (var session in sessionEnumerator)
+                    var action = scenario.Actions.FirstOrDefault(a => a.ProcessName == process.ProcessName);
+
+                    if (action == null)
                     {
-                        using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
-                        using (var sessionControl = session.QueryInterface<AudioSessionControl2>())
+                        continue;
+                    }
+
+                    processes.Add(new ProcessModel(process.Id, process.ProcessName, action));
+                }
+
+                using (var sessionManager = GetDefaultAudioSessionManager2(DataFlow.Render))
+                {
+                    using (var sessionEnumerator = sessionManager.GetSessionEnumerator())
+                    {
+                        foreach (var session in sessionEnumerator)
                         {
-                            var proc = processes.FirstOrDefault(p => p.ProcessId == sessionControl.ProcessID);
-                            if (proc != null)
+                            using (var simpleVolume = session.QueryInterface<SimpleAudioVolume>())
+                            using (var sessionControl = session.QueryInterface<AudioSessionControl2>())
                             {
-                                switch (proc.ProcessAction.ActionType)
+                                var proc = processes.FirstOrDefault(p => p.ProcessId == sessionControl.ProcessID);
+                                if (proc != null)
                                 {
-                                    case ActionType.Mute:
-                                        simpleVolume.IsMuted = true;
-                                        break;
-                                    case ActionType.Unmute:
-                                        simpleVolume.IsMuted = false;
-                                        break;
-                                    case ActionType.SetTo:
-                                        var value = (float)(proc.ProcessAction.SetToValue / 100);
-                                        simpleVolume.MasterVolume = value;
-                                        break;
+                                    switch (proc.ProcessAction.ActionType)
+                                    {
+                                        case ActionType.Mute:
+                                            simpleVolume.IsMuted = true;
+                                            break;
+                                        case ActionType.Unmute:
+                                            simpleVolume.IsMuted = false;
+                                            break;
+                                        case ActionType.SetTo:
+                                            var value = (float)(proc.ProcessAction.SetToValue / 100);
+                                            simpleVolume.MasterVolume = value;
+                                            break;
+                                    }
                                 }
+
+
                             }
-
-
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                ServiceHelpers.WriteToLog($"Fail when running scenario - {ex.Message}");
             }
         }
 

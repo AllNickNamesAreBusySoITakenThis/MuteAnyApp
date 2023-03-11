@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuteAnyApp.Core.Types;
+using MuteAnyApp.Core.Helpers;
 using MuteAnyApp.WinUI.Types;
 using MuteAnyApp.WinUI.Views;
 using Newtonsoft.Json;
@@ -13,15 +14,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using MuteAnyApp.Core.Managers;
 
 namespace MuteAnyApp.WinUI.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject
     {
-        const string ScenarioFolderName = "Scenarios";
-        const string ScenarioFileName = "CreatedScenarios.json";
-        const string LogFolderName = "Logs";
-        const string LogFileName = "Logs.txt";
 
         public ObservableCollection<SoundChangeScenario> Scenarios { get; set; } = new ObservableCollection<SoundChangeScenario>();
 
@@ -85,7 +83,7 @@ namespace MuteAnyApp.WinUI.ViewModels
         }
 
         [RelayCommand]
-        async Task RemoveScenario(Guid scenarioGuid)
+        async Task DeleteScenario(Guid scenarioGuid)
         {
             try
             {
@@ -95,45 +93,88 @@ namespace MuteAnyApp.WinUI.ViewModels
                     return;
                 }
                 Scenarios.Remove(toRemove);
-                await SaveScenarios(Scenarios);
+                await RemoveScenario(scenarioGuid);
             }
             catch (Exception ex)
             {
-                WriteToLog($"Ошибка удаления сценария : {ex.Message}");
                 MessageBox.Show(ex.Message, "Ошибка удаления сценария", MessageBoxButton.OK);
             }
         }
 
-        [RelayCommand]
-        void CreateBat(Guid scenarioGuid)
-        {
-            try
-            {
-                var scenario = Scenarios.FirstOrDefault(s => s.Id == scenarioGuid);
-                if (scenario == null)
-                {
-                    return;
-                }
+        //[RelayCommand]
+        //void CreateBat(Guid scenarioGuid)
+        //{
+        //    try
+        //    {
+        //        var scenario = Scenarios.FirstOrDefault(s => s.Id == scenarioGuid);
+        //        if (scenario == null)
+        //        {
+        //            return;
+        //        }
 
-                var batText = $"start /d \"{Directory.GetCurrentDirectory()}\" SoundManagerConsole.exe {scenarioGuid}";
+        //        var vbsText = $"""
+        //            Set WshShell = CreateObject("WScript.Shell" ) 
+        //            strPath = Wscript.ScriptFullName
+        //            Set objFSO = CreateObject("Scripting.FileSystemObject")
+        //            Set objFile = objFSO.GetFile(strPath)
+        //            strFolder = objFSO.GetParentFolderName(objFile) 
+        //            strFolder = objFSO.GetParentFolderName(strFolder) 
+        //            strPath = strFolder & "\SoundManagerConsole.exe {scenarioGuid}"
+        //            WshShell.Run strPath, 0 
+        //            Set WshShell = Nothing  
+        //            """;
 
-                var batDir = Path.Combine(Directory.GetCurrentDirectory(), "ScenariosBats");
+        //        // var batText = $"start /d \"{Directory.GetCurrentDirectory()}\" SoundManagerConsole.exe {scenarioGuid}";
 
-                if (!Directory.Exists(batDir))
-                {
-                    Directory.CreateDirectory(batDir);
-                }
+        //        var batDir = Path.Combine(ServiceHelpers.GetAssemblyDirectory(), ServiceHelpers.ScenarioFolderName);
 
-                File.WriteAllText(Path.Combine(batDir,$"Scenario-{scenario.Name}.bat"), batText);
+        //        if (!Directory.Exists(batDir))
+        //        {
+        //            Directory.CreateDirectory(batDir);
+        //        }
 
-                MessageBox.Show(".bat created!", "Response", MessageBoxButton.OK);
-            }
-            catch (Exception ex)
-            {
-                WriteToLog($"Ошибка создания исполняемого файла : {ex.Message}");
-                MessageBox.Show(ex.Message, "Ошибка создания исполняемого файла", MessageBoxButton.OK);
-            }
-        }
+        //        File.WriteAllText(Path.Combine(batDir, $"Scenario-{scenario.Name}.vbs"), vbsText);
+
+        //        MessageBox.Show(".bat created!", "Response", MessageBoxButton.OK);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ServiceHelpers.WriteToLog($"Ошибка создания исполняемого файла : {ex.Message}");
+        //        MessageBox.Show(ex.Message, "Ошибка создания исполняемого файла", MessageBoxButton.OK);
+        //    }
+        //}
+
+        //[RelayCommand]
+        //void CreateLnk(Guid scenarioGuid)
+        //{
+        //    try
+        //    {
+        //        var scenario = Scenarios.FirstOrDefault(s => s.Id == scenarioGuid);
+        //        if (scenario == null)
+        //        {
+        //            return;
+        //        }
+        //        IShellLink link = (IShellLink)new ShellLink();
+
+        //        var scenarioDataDir = Path.Combine(ServiceHelpers.GetAssemblyDirectory(), ServiceHelpers.ScenarioFolderName);
+
+        //        // setup shortcut information
+        //        link.SetDescription("Link to run scenario");
+        //        link.SetPath(Path.Combine(ServiceHelpers.GetAssemblyDirectory(), "SoundManagerConsole.exe"));
+        //        link.SetArguments(scenarioGuid.ToString());
+
+        //        // save it
+        //        IPersistFile file = (IPersistFile)link;
+        //        file.Save(Path.Combine(scenarioDataDir, $"Run_{scenario.Name}.lnk"), false);
+
+        //        MessageBox.Show("Ярлык для запуска был успешно создан", "Успех", MessageBoxButton.OK);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ServiceHelpers.WriteToLog($"Ошибка создания ярлыка исполняемого файла : {ex.Message}");
+        //        MessageBox.Show(ex.Message, "Ошибка создания ярлыка исполняемого файла", MessageBoxButton.OK);
+        //    }
+        //}
 
         #endregion
 
@@ -150,46 +191,14 @@ namespace MuteAnyApp.WinUI.ViewModels
                 await Task.Delay(200);
 
                 var storedScenarios = await Task.Run<List<SoundChangeScenario>>(() =>
-                {
-                    var logsDir = Path.Combine(Directory.GetCurrentDirectory(), LogFolderName);
-
-                    if (!Directory.Exists(logsDir))
+                {                    
+                    var sm = new ScenarioManager();
+                    var result = sm.GetAllStoredScenarios(out var error);
+                    if (result == null || !string.IsNullOrEmpty(error))
                     {
-                        Directory.CreateDirectory(logsDir);
+                        throw new Exception(error);
                     }
-
-                    var scenarioDir = Path.Combine(Directory.GetCurrentDirectory(), ScenarioFolderName);
-
-                    if (!Directory.Exists(scenarioDir))
-                    {
-                        Directory.CreateDirectory(scenarioDir);
-                        return new List<SoundChangeScenario>(); ;
-                    }
-
-                    var scenarioFile = Path.Combine(scenarioDir, ScenarioFileName);
-
-                    if (!File.Exists(scenarioFile))
-                    {
-                        File.Create(scenarioFile);
-                        return new List<SoundChangeScenario>();
-                    }
-
-                    var jsonString = File.ReadAllText(scenarioFile);
-
-                    var storedScenarios = JsonConvert.DeserializeObject<IEnumerable<SoundChangeScenario>>(jsonString);
-                    if (storedScenarios == null)
-                    {
-                        return new List<SoundChangeScenario>();
-                    }
-
-                    var result = new List<SoundChangeScenario>();
-
-                    foreach (var scenario in storedScenarios)
-                    {
-                        result.Add(scenario);
-                    }
-
-                    return result;
+                    return result.ToList();
                 });
 
                 foreach (var item in storedScenarios)
@@ -199,8 +208,8 @@ namespace MuteAnyApp.WinUI.ViewModels
             }
             catch (Exception ex)
             {
-                WriteToLog($"Ошибка загрузки сценариев : {ex.Message}");
-                MessageBox.Show( ex.Message, "Ошибка загрузки сценариев", MessageBoxButton.OK);
+                // ServiceHelpers.WriteToLog($"Ошибка загрузки сценариев : {ex.Message}");
+                MessageBox.Show(ex.Message, "Ошибка загрузки сценариев", MessageBoxButton.OK);
             }
             finally
             {
@@ -208,76 +217,47 @@ namespace MuteAnyApp.WinUI.ViewModels
             }
         }
 
-        async Task SaveScenarios(IEnumerable<SoundChangeScenario> scenarios)
+        async Task SaveScenarios(IEnumerable<SoundChangeScenario> scenariosToStore)
         {
             try
             {
                 await Task.Run(() =>
                 {
-                    var logsDir = Path.Combine(Directory.GetCurrentDirectory(), LogFolderName);
-
-                    if (!Directory.Exists(logsDir))
+                    foreach (var scenario in scenariosToStore)
                     {
-                        Directory.CreateDirectory(logsDir);
-                    }
-
-                    var scenarioDir = Path.Combine(Directory.GetCurrentDirectory(), ScenarioFolderName);
-
-                    if (!Directory.Exists(scenarioDir))
-                    {
-                        Directory.CreateDirectory(scenarioDir);
-                    }
-
-                    var scenarioFile = Path.Combine(scenarioDir, ScenarioFileName);
-
-                    using (StreamWriter file = File.CreateText(scenarioFile))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Serialize(file, scenarios);
+                        var sm = new ScenarioManager();
+                        if (!sm.SaveScenario(scenario, out var error))
+                        {
+                            throw new Exception(error);
+                        }
                     }
                 });
             }
             catch (Exception ex)
             {
-                WriteToLog($"Ошибка сохранения сценариев : {ex.Message}");
+                // ServiceHelpers.WriteToLog($"Ошибка сохранения сценариев : {ex.Message}");
                 MessageBox.Show(ex.Message, "Ошибка сохранения сценариев", MessageBoxButton.OK);
             }
         }
 
-        void WriteToLog(string message)
+        async Task RemoveScenario(Guid scenarioGuid)
         {
             try
             {
-                var logsDir = Path.Combine(Directory.GetCurrentDirectory(), LogFolderName);
-
-                if (!Directory.Exists(logsDir))
+                await Task.Run(() =>
                 {
-                    Directory.CreateDirectory(logsDir);
-                }
-
-                var logFileName = Path.Combine(logsDir, LogFileName);
-
-                if (File.Exists(logFileName))
-                {
-                    var content = File.ReadAllLines(logFileName).ToList();
-                    if (content.Count > 200)
+                    var sm = new ScenarioManager();
+                    if (!sm.RemoveScenario(scenarioGuid, out var error))
                     {
-                        content = content.Take(199).ToList();
+                        throw new Exception(error);
                     }
-                    content.Insert(0, $"{DateTime.Now} - {message}");
-                    File.WriteAllLines(logFileName, content);
-                }
-                else
-                {
-                    File.WriteAllLines(logFileName, new string[] { $"{DateTime.Now} - {message}" });
-                }
+                });
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Ошибка записи лога", MessageBoxButton.OK);
+                MessageBox.Show(ex.Message, "Ошибка удаления сценария", MessageBoxButton.OK);
             }
         }
-
-        #endregion        
+        #endregion
     }
 }
