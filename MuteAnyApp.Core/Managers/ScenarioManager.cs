@@ -221,9 +221,15 @@ namespace MuteAnyApp.Core.Managers
                 var csCoreFilePath = Path.Combine(mainDir, csCoreName);
                 if (!File.Exists(appFilePath) || !File.Exists(jsonFilePath) || !File.Exists(dllFilePath) || !File.Exists(coreFilePath) || !File.Exists(njFilePath) || !File.Exists(csCoreFilePath))
                 {
+#if DEBUG
                     // it's ok, maybe we dont have it in debug
                     // anyway it can be added manually
                     return true;
+#endif
+
+#if !DEBUG
+                    return false;
+#endif
                 }
 
                 if (!Directory.Exists(folderPath))
@@ -248,6 +254,6 @@ namespace MuteAnyApp.Core.Managers
             }
         }
 
-        #endregion
+#endregion
     }
 }
