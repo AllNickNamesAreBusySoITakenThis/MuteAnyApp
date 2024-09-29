@@ -5,7 +5,7 @@
 		<TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Version>1.1.2</Version>
+		<Version>1.2.1</Version>
 		<AssemblyName>SoundManagerConsole</AssemblyName>
 		<Authors>Vanny</Authors>
 		<Description>This is app to manage another apps sounds</Description>
