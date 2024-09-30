@@ -1,0 +1,20 @@
+﻿<Window x:Class="MuteAppUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:local="clr-namespace:MuteAppUI" 
+        xmlns:ntIconBeh="clr-namespace:MuteAppUI.Behaviors"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <behaviors:Interaction.Behaviors>
+        <ntIconBeh:NotifyTrayIconBehavior/>
+    </behaviors:Interaction.Behaviors>
+    <Grid>
+        <Button Content="Start hook" HorizontalAlignment="Left" Margin="21,24,0,0" VerticalAlignment="Top" Height="52" Width="153" Click="StartHookClick"/>
+        <Button Content="Release hook" HorizontalAlignment="Left" Margin="227,24,0,0" VerticalAlignment="Top" Height="52" Width="162" Click="StopHookClick"/>
+        <TextBlock x:Name="logText" HorizontalAlignment="Center" Margin="0,113,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Height="279" Width="739"/>
+
+    </Grid>
+</Window>
